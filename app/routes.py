@@ -3,6 +3,7 @@ from app import app, db
 from app.extention import login_required
 from app.models import User, Board, Comment
 
+
 @app.route('/')
 @login_required
 def index():
@@ -84,6 +85,8 @@ def register():
     else:
         return render_template("register.html")
 
-@app.rout("/logout")
+@app.route("/logout")
 def logout():
-	pass            
+    session.clear()
+
+    return redirect("/")           
