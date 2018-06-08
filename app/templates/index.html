@@ -3,11 +3,11 @@
 	
 	<div class="container">
 		<div class="mb-4">
-    		<a href="/new" class="btn btn-success">New Board</a>
+    		<a href="/new_board" class="btn btn-success">New Board</a>
   		</div>
 		<ul class="list-group">
-		{% for key, board in boards.items() %}
-			<li class="list-group-item list-group-item-dark"><a class="list-group-item-dark" href="/{{ key }}">{{ board }}</li>
+		{% for board in boards %}
+			<li class="list-group-item list-group-item-dark"><a class="list-group-item-dark" href="/{{ board.id }}">{{ board.board_name }}</li>
 		{% endfor %}
 		</ul>
 	</div>	
