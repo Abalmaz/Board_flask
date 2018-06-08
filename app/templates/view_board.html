@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block body %}
+	<div class="container">
+		<div class="card border-secondary mb-3">
+		  <div class="card-header bg-transparent border-secondary">
+		    {{ creator }}
+		  </div>
+		  <div class="card-body">
+		    <blockquote class="blockquote mb-0">
+		      <p>{{ board_name }}</p>
+		    </blockquote>  
+		    <footer><small class="text-muted">{{ create_date }}</small></footer>
+		  </div>
+		</div>
+		<br>
+		<h5>Comments</h5>
+			{% for comment in comments %}
+		    <div class="comment">
+		        <strong>{{ comment[0] }}</strong>
+		        <p>{{ comment[1] }}</p>
+		    </div>
+		{% else%}
+		    <p>No comments here yet</p>
+		{% endfor %}		
+	<a class="badge badge-success" href="{{ board_id }}/add_comment" class="button">Add comment</a>
+{% endblock %}
