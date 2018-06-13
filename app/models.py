@@ -1,11 +1,11 @@
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import db, ma
+from app import db
 
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(30),index=True, unique=True)
+    username = db.Column(db.String(30), index=True, unique=True)
     hash_pwd = db.Column(db.String(120))
     boards = db.relationship('Board', backref='author', lazy='dynamic')
     comments = db.relationship('Comment', backref='author', lazy='dynamic')

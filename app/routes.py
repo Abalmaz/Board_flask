@@ -20,7 +20,7 @@ def index():
 def new_board():
     board = request.get_json()
 
-    error = validator(board)
+    error = validator('board', board)
     if error:
         return jsonify(error)
 
@@ -41,19 +41,27 @@ def view_board(board_id):
     for comment in comments:
         all_comment.append({'id': comment.id, 'author': comment.author.username, 'text': comment.text})
     likes = Likes.query.filter_by(board_id=board_id).count()
-    return jsonify({'board': board, 'comments': all_comment, 'likes': likes})
+    return make_response(jsonify({'board': board, 'comments': all_comment, 'likes': likes}), 201)
 
 
 @app.route('/<board_id>/add_comment', methods=["POST"])
 @login_required
 def add_comment(board_id):
     comment = request.get_json()
+
+    error = validator('comment', comment)
+    if error:
+        return jsonify(error)
+
     new_comment = Comment(text=comment.get("comment_text"), user_id=session["user_id"], board_id=board_id)
+
     if can_comments():
         db.session.add(new_comment)
         db.session.commit()
         session["count_comments"] -= 1
         return redirect('/%s' % board_id)
+    else:
+        return jsonify({'error': 'You have reached your message limit in hour'})
 
 
 @app.route('/<board_id>/likes_board', methods=["POST"])
@@ -64,7 +72,9 @@ def likes_board(board_id):
         db.session.add(like)
         db.session.commit()
         session["count_likes"] -= 1
-    return redirect('/%s' % board_id)
+        return redirect('/%s' % board_id)
+    else:
+        return jsonify({'error': 'You have reached your likes limit in hour'})
 
 
 @app.route("/login", methods=["POST"])
@@ -73,7 +83,7 @@ def login():
     user = User.query.filter_by(username=request.form.get("username")).first()
 
     if user is None or not user.check_pass(request.form.get("password")):
-        return jsonify()
+        return jsonify({'error': 'Error authorization'})
 
     session["user_id"] = user.id
 

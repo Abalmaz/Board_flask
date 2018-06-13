@@ -30,13 +30,25 @@ def can_likes():
     return check("time_update_likes_count", "count_likes")
 
 
-def validator(json_data):
+def validator(form_input, json_data):
     errors = {}
     if json_data is None:
         errors['Error'] = "Request is empty"
-    elif json_data.get("board_name") is None:
-        errors['board'] = "Board is required"
-    elif len(json_data.get('board_name')) > 50:
-        errors['board'] = "Board name is too long. Max 50 symbols."
+    elif form_input == 'board':
+        if json_data.get("board_name") is None:
+            errors['board'] = "Board is required"
+        elif len(json_data.get('board_name')) > 50:
+            errors['board'] = "Board name is too long. Max 50 symbols."
+    elif form_input == 'comment':
+        if json_data.get("comment_text") is None:
+            errors['comment'] = "Comment is required"
+        elif len(json_data.get('comment')) > 255:
+            errors['comment'] = "Comment is too long. Max 255 symbols."
+    elif form_input == 'user':
+        if json_data.get("username") is None:
+            errors['user'] = "User name is required"
+        elif len(json_data.get('username')) > 30:
+            errors['user'] = "Username is too long. Max 30 symbols."
+
 
     return errors
