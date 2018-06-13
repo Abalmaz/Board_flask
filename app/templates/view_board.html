@@ -2,6 +2,9 @@
 {% block title %}View Board{% endblock %}
 {% block body %}
 	<div class="container">
+		<p>{{ session["user_id"] }}</p>
+		<p>{{ session["time_update_likes_count"] }}</p>
+		<p>{{ session["count_likes"] }}</p>
 		<div class="card border-secondary mb-3">
 		  <div class="card-header bg-transparent border-secondary">
 		    {{ board.author.username }}
@@ -13,6 +16,8 @@
 		    <footer><small class="text-muted">{{ board.create_date }}</small></footer>
 		  </div>
 		</div>
+		<p>Likes {{ likes }}</p>
+		<button class="badge badge-success" action="./{{ board.id }}/likes_board" >Add likes</button>
 		<br>
 		<h5>Comments</h5>
 			{% for comment in comments %}
@@ -23,5 +28,6 @@
 		{% else%}
 		    <p>No comments here yet</p>
 		{% endfor %}		
-	<a class="badge badge-success" href="{{ board.id }}/add_comment" class="button">Add comment</a>
+		<a class="badge badge-success" href="{{ board.id }}/add_comment" class="button">Add comment</a>
+		</div>
 {% endblock %}

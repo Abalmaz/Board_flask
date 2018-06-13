@@ -1,92 +1,96 @@
-from flask import render_template, session, redirect, request, url_for
+from flask import session, redirect, request, jsonify, make_response
 from app import app, db
-from app.extention import login_required
-from app.models import User, Board, Comment
+from app.extention import login_required, can_comments, can_likes, validator
+from app.models import User, Board, Comment, Likes
 
 
-@app.route('/')
+@app.route('/', methods=["GET"])
 @login_required
 def index():
-	boards = Board.query.all()
-	return render_template('index.html', boards=boards)
+    boards = Board.query.all()
+    all_boards = []
+    for board in boards:
+        all_boards.append({'id': board.id, 'board_name': board.board_name})
+
+    return make_response(jsonify(all_boards), 200)
 
 
-@app.route('/new_board', methods=["GET","POST"])
+@app.route('/new_board', methods=["POST"])
 @login_required
 def new_board():
-    if request.method == "POST":
-		
-        board = Board(board_name=request.form.get("board_name"), user_id=session["user_id"])
-        db.session.add(board)
-        db.session.commit()
-        return redirect("/")
-    else:
-        return render_template("new_board.html")	
+    board = request.get_json()
+
+    error = validator(board)
+    if error:
+        return jsonify(error)
+
+    add_board = Board(board_name=board.get("board_name"), user_id=session["user_id"])
+    db.session.add(add_board)
+    db.session.commit()
+
+    return redirect("/")
 
 
 @app.route('/<board_id>', methods=["GET"])
 @login_required
 def view_board(board_id):
-	board = Board.query.filter_by(id=board_id).first_or_404()
-	comments = board.comments	
-	return render_template("view_board.html", board=board, comments=comments)
+    boards = Board.query.filter_by(id=board_id).first_or_404()
+    board = {'id': boards.id, 'author': boards.author.username, 'create_date': boards.create_date}
+    all_comment = []
+    comments = boards.comments
+    for comment in comments:
+        all_comment.append({'id': comment.id, 'author': comment.author.username, 'text': comment.text})
+    likes = Likes.query.filter_by(board_id=board_id).count()
+    return jsonify({'board': board, 'comments': all_comment, 'likes': likes})
 
 
-@app.route('/<board_id>/add_comment', methods=["GET", "POST"])
+@app.route('/<board_id>/add_comment', methods=["POST"])
 @login_required
 def add_comment(board_id):
-	if request.method == "POST":
-		comment = Comment(text=request.form.get("comment_text"), user_id=session["user_id"], board_id=board_id)
-		db.session.add(comment)
-		db.session.commit()
-		return redirect('/%s' % board_id)
-	else:
-		return render_template("add_comment.html")	
-
-
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    """Log user in"""
-    session.clear()
-
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-
-        # Query database for username
-        user = User.query.filter_by(username=request.form.get("username")).first()
-
-        if user is None or not user.check_pass(request.form.get("password")):
-            return redirect(url_for('login'))
-
-        # Remember which user has logged in
-        session["user_id"] = user.id
-
-        # Redirect user to home page
-        return redirect("/")
-
-    else:
-        return render_template("login.html")
-
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    """Register user"""
-    if request.method == "POST":
-
-        user = User(username=request.form.get("username"))
-        user.set_pass(request.form.get("password"))
-        db.session.add(user)
+    comment = request.get_json()
+    new_comment = Comment(text=comment.get("comment_text"), user_id=session["user_id"], board_id=board_id)
+    if can_comments():
+        db.session.add(new_comment)
         db.session.commit()
+        session["count_comments"] -= 1
+        return redirect('/%s' % board_id)
 
-        return redirect("/login")
 
-    else:
-        return render_template("register.html")
+@app.route('/<board_id>/likes_board', methods=["POST"])
+@login_required
+def likes_board(board_id):
+    like = Likes(user_id=session["user_id"], board_id=board_id)
+    if can_likes():
+        db.session.add(like)
+        db.session.commit()
+        session["count_likes"] -= 1
+    return redirect('/%s' % board_id)
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    session.clear()
+    user = User.query.filter_by(username=request.form.get("username")).first()
+
+    if user is None or not user.check_pass(request.form.get("password")):
+        return jsonify()
+
+    session["user_id"] = user.id
+
+    return redirect("/")
+
+
+@app.route("/register", methods=["POST"])
+def register():
+    new_user = request.get_json()
+    user = User(username=new_user["username"])
+    user.set_pass(new_user["password"])
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify()
+
 
 @app.route("/logout")
 def logout():
     session.clear()
-
-    return redirect("/")           
