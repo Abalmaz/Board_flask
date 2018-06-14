@@ -1,4 +1,4 @@
-from flask import redirect, session
+from flask import redirect, session, abort
 from datetime import datetime, timedelta
 from functools import wraps
 
@@ -7,7 +7,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if session.get("user_id") is None:
-            return redirect("/login")
+            abort(401)
         return f(*args, **kwargs)
 
     return decorated_function

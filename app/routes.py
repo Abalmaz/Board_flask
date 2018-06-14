@@ -80,9 +80,12 @@ def likes_board(board_id):
 @app.route("/login", methods=["POST"])
 def login():
     session.clear()
-    user = User.query.filter_by(username=request.form.get("username")).first()
+    
+    connect_user = request.get_json()
 
-    if user is None or not user.check_pass(request.form.get("password")):
+    user = User.query.filter_by(username=connect_user.get("username")).first()
+
+    if user is None or not user.check_pass(connect_user.get("password")):
         return jsonify({'error': 'Error authorization'})
 
     session["user_id"] = user.id
@@ -93,12 +96,22 @@ def login():
 @app.route("/register", methods=["POST"])
 def register():
     new_user = request.get_json()
-    user = User(username=new_user["username"])
-    user.set_pass(new_user["password"])
+
+    error = validator('user', new_user)
+    if error:
+        return jsonify(error)
+    
+    have_user = User.query.filter_by(username = new_user.get("username")).first()
+    if have_user is not None:
+        return jsonify({'message': 'User name dublicated'})
+
+    user = User(username=new_user.get("username"))    
+    
+    user.set_pass(new_user.get("password"))
     db.session.add(user)
     db.session.commit()
 
-    return jsonify()
+    return jsonify({'message': "User created successful"})
 
 
 @app.route("/logout")
