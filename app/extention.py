@@ -42,7 +42,7 @@ def validator(form_input, json_data):
     elif form_input == 'comment':
         if json_data.get("comment_text") is None:
             errors['comment'] = "Comment is required"
-        elif len(json_data.get('comment')) > 255:
+        elif len(json_data.get('comment_text')) > 255:
             errors['comment'] = "Comment is too long. Max 255 symbols."
     elif form_input == 'user':
         if json_data.get("username") is None:
